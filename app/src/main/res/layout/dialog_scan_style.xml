@@ -19,7 +19,8 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Number of items"
+        android:text="Current Stock :"
+        android:id="@+id/current_stock"
         android:textColor="@color/black"/>
 
 
@@ -44,6 +45,14 @@
             android:text="In"
             android:background="@color/green"
             android:id="@+id/inScan"
+            style="@style/button_style"
+            android:layout_margin="2dp"/>
+        <Button
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:text="Update"
+            android:background="@color/blue"
+            android:id="@+id/updateScan"
             style="@style/button_style"
             android:layout_margin="2dp"/>
         <Button

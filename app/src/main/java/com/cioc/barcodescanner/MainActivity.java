@@ -58,31 +58,81 @@ public class MainActivity extends AppCompatActivity {
         integrator.setPrompt("Scan");
         integrator.setCameraId(0);
         integrator.setBeepEnabled(false);
-        integrator.setBarcodeImageEnabled(true);
+        integrator.setBarcodeImageEnabled(false);
         integrator.initiateScan();
-
     }
 
     void showModal(final int pk, String scanContent, final int inStock){
         if (pk != 0) {
-            TextView productName;
+
+            TextView productName, currentStock;
             final EditText quantity;
-            Button inScan, outScan;
+            Button inScan, updateScan, outScan;
             View v = getLayoutInflater().inflate(R.layout.dialog_scan_style, null, false);
             productName = v.findViewById(R.id.productName);
+            currentStock = v.findViewById(R.id.current_stock);
             quantity = v.findViewById(R.id.quantity);
             inScan = v.findViewById(R.id.inScan);
-            outScan = v.findViewById(R.id.outScan);
+            updateScan = v.findViewById(R.id.updateScan);
+            outScan = v.findViewById(R.id.outScan) ;
             productName.setText(scanContent);
+            currentStock.setText("Current Stock :" + inStock);
             quantity.setText("1");
 
             AlertDialog.Builder adb = new AlertDialog.Builder(this);
             adb.setView(v);
             adb.setCancelable(false);
             final AlertDialog ad = adb.create();
+
             inScan.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    ad.dismiss();
+                    startActivity(new Intent(MainActivity.this, MainActivity.class));
+                    finish();
+                }
+            });
+
+            updateScan.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String s = quantity.getText().toString().trim();
+                    Integer i = Integer.parseInt(s);
+//                    final int stock = inStock - i;
+//                    Toast.makeText(MainActivity.this, "" + stock, Toast.LENGTH_SHORT).show();
+
+                    RequestParams params = new RequestParams();
+                    params.put("inStock", i);
+                    serverURL = "http://192.168.43.9:8000/api/POS/product/" + pk + '/';
+
+                    client.patch(serverURL , params , new JsonHttpResponseHandler(){
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
+                            try {
+                                JSONObject usrObj = response.getJSONObject(0);
+//                                String name = usrObj.getString("name");
+//                                Integer pk = usrObj.getInt("pk");
+                                Toast.makeText(MainActivity.this, "Updated", Toast.LENGTH_SHORT).show();
+
+//                                final String scanContent = result.getContents();
+//                                showModal(pk, name,inStock);
+
+                            } catch (JSONException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+
+                        @Override
+                        public void onFinish() {
+                            System.out.println("finished 0101");
+                        }
+
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
+                            // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                            System.out.println("finished failed 001001");
+                        }
+                    });
                     ad.dismiss();
                     startActivity(new Intent(MainActivity.this, MainActivity.class));
                     finish();
@@ -144,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         final IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-        if (result!=null) {
+        if (result != null) {
             if (result.getContents() == null) {
                 Toast.makeText(MainActivity.this, "You cancelled the sanning", Toast.LENGTH_LONG).show();
 
@@ -162,7 +212,8 @@ public class MainActivity extends AppCompatActivity {
                             Integer inStock = usrObj.getInt("inStock");
 
                             final String scanContent = result.getContents();
-                            showModal(pk, name,inStock);
+                            Toast.makeText(MainActivity.this, scanContent, Toast.LENGTH_SHORT).show();
+                            showModal(pk, name, inStock);
 
                         } catch (JSONException e) {
                             throw new RuntimeException(e);
@@ -183,8 +234,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
-
             }
-        }
+        }else  Toast.makeText(getApplicationContext(),"No scan data received!", Toast.LENGTH_SHORT).show();
     }
 }
