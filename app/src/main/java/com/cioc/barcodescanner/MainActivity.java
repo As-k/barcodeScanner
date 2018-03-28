@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -45,21 +46,83 @@ public class MainActivity extends AppCompatActivity {
     private CookieStore httpCookieStore;
     private AsyncHttpClient client = new AsyncHttpClient();
 
-    private static String serverURL;
+    private static String serverURL = "http://192.168.43.9:8000/";
     long ids = 65465765;
+
+//    SessionManager sessionManager;
+
+    SharedPreferences sp;
+    SharedPreferences.Editor spe;
+    boolean res;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        IntentIntegrator integrator = new IntentIntegrator(MainActivity.this);
-        integrator.setDesiredBarcodeFormats(IntentIntegrator.ONE_D_CODE_TYPES);
-        integrator.setPrompt("Scan");
-        integrator.setCameraId(0);
-        integrator.setBeepEnabled(false);
-        integrator.setBarcodeImageEnabled(false);
-        integrator.initiateScan();
+//        sessionManager = new SessionManager(this);
+
+        final EditText et = new EditText(this);
+        et.setEms(10);
+        et.setText("http://192.168.43.9:8000/");
+
+        sp = getSharedPreferences("server_status", MODE_PRIVATE);
+        spe = sp.edit();
+
+        res = sp.getBoolean("status", false);
+
+        if (!res) {
+
+            AlertDialog.Builder adb = new AlertDialog.Builder(this);
+            adb.setIcon(R.drawable.settings);
+            adb.setTitle("ERP Server");
+            adb.setView(et);
+            adb.setCancelable(false);
+            adb.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
+
+            adb.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    String url = et.getText().toString().trim();
+                    if (url.isEmpty()) {
+                        et.setError("Empty");
+                    } else {
+                        boolean b = url.equals("http://192.168.43.9:8000/");
+                        if (b) {
+                            IntentIntegrator integrator = new IntentIntegrator(MainActivity.this);
+                            integrator.setDesiredBarcodeFormats(IntentIntegrator.ONE_D_CODE_TYPES);
+                            integrator.setPrompt("Scan");
+                            integrator.setCameraId(0);
+                            integrator.setBeepEnabled(false);
+                            integrator.setBarcodeImageEnabled(false);
+                            integrator.initiateScan();
+                            dialog.dismiss();
+                            spe.putBoolean("status", true);
+                            spe.commit();
+//                        sessionManager.setStatus(b);
+                        } else {
+                            Toast.makeText(MainActivity.this, "Server not found", Toast.LENGTH_SHORT).show();
+//                        sessionManager.setStatus(b);
+                        }
+                    }
+                }
+            });
+            adb.create().show();
+        } else {
+
+            IntentIntegrator integrator = new IntentIntegrator(MainActivity.this);
+            integrator.setDesiredBarcodeFormats(IntentIntegrator.ONE_D_CODE_TYPES);
+            integrator.setPrompt("Scan");
+            integrator.setCameraId(0);
+            integrator.setBeepEnabled(false);
+            integrator.setBarcodeImageEnabled(false);
+            integrator.initiateScan();
+        }
     }
 
     void showModal(final int pk, String scanContent, final int inStock){
@@ -103,36 +166,9 @@ public class MainActivity extends AppCompatActivity {
 
                     RequestParams params = new RequestParams();
                     params.put("inStock", i);
-                    serverURL = "http://192.168.43.9:8000/api/POS/product/" + pk + '/';
 
-                    client.patch(serverURL , params , new JsonHttpResponseHandler(){
-                        @Override
-                        public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
-                            try {
-                                JSONObject usrObj = response.getJSONObject(0);
-//                                String name = usrObj.getString("name");
-//                                Integer pk = usrObj.getInt("pk");
-                                Toast.makeText(MainActivity.this, "Updated", Toast.LENGTH_SHORT).show();
+                    setClientServer(params, pk);
 
-//                                final String scanContent = result.getContents();
-//                                showModal(pk, name,inStock);
-
-                            } catch (JSONException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
-
-                        @Override
-                        public void onFinish() {
-                            System.out.println("finished 0101");
-                        }
-
-                        @Override
-                        public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
-                            // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                            System.out.println("finished failed 001001");
-                        }
-                    });
                     ad.dismiss();
                     startActivity(new Intent(MainActivity.this, MainActivity.class));
                     finish();
@@ -142,6 +178,7 @@ public class MainActivity extends AppCompatActivity {
             outScan.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+
                     String s = quantity.getText().toString().trim();
                     Integer i = Integer.parseInt(s);
                     final int stock = inStock - i;
@@ -149,36 +186,9 @@ public class MainActivity extends AppCompatActivity {
 
                     RequestParams params = new RequestParams();
                     params.put("inStock", stock);
-                    serverURL = "http://192.168.43.9:8000/api/POS/product/" + pk + '/';
 
-                    client.patch(serverURL , params , new JsonHttpResponseHandler(){
-                        @Override
-                        public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
-                            try {
-                                JSONObject usrObj = response.getJSONObject(0);
-//                                String name = usrObj.getString("name");
-//                                Integer pk = usrObj.getInt("pk");
-                                Toast.makeText(MainActivity.this, "Updated", Toast.LENGTH_SHORT).show();
+                    setClientServer(params, pk);
 
-//                                final String scanContent = result.getContents();
-//                                showModal(pk, name,inStock);
-
-                            } catch (JSONException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
-
-                        @Override
-                        public void onFinish() {
-                            System.out.println("finished 0101");
-                        }
-
-                        @Override
-                        public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
-                            // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                            System.out.println("finished failed 001001");
-                        }
-                    });
                     ad.dismiss();
                     startActivity(new Intent(MainActivity.this, MainActivity.class));
                     finish();
@@ -188,6 +198,37 @@ public class MainActivity extends AppCompatActivity {
             ad.show();
 //                Toast.makeText(MainActivity.this, ""+scanContent, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void setClientServer(RequestParams params, int pk){
+        client.patch(serverURL+"api/POS/product/" + pk + '/' , params , new JsonHttpResponseHandler(){
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
+                try {
+                    JSONObject usrObj = response.getJSONObject(0);
+//                                String name = usrObj.getString("name");
+//                                Integer pk = usrObj.getInt("pk");
+                    Toast.makeText(MainActivity.this, "Updated", Toast.LENGTH_SHORT).show();
+
+//                                final String scanContent = result.getContents();
+//                                showModal(pk, name,inStock);
+
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            @Override
+            public void onFinish() {
+                System.out.println("finished 0101");
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
+                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                System.out.println("finished failed 001001");
+            }
+        });
     }
 
     @Override
@@ -200,9 +241,7 @@ public class MainActivity extends AppCompatActivity {
 
             } else {
 
-                serverURL = "http://192.168.43.9:8000/api/POS/product/?&search=" + ids;
-
-                client.get(serverURL, new JsonHttpResponseHandler() {
+                client.get(serverURL+ "api/POS/product/?&search=" + ids, new JsonHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
                         try {
@@ -212,7 +251,7 @@ public class MainActivity extends AppCompatActivity {
                             Integer inStock = usrObj.getInt("inStock");
 
                             final String scanContent = result.getContents();
-                            Toast.makeText(MainActivity.this, scanContent, Toast.LENGTH_SHORT).show();
+//                            Toast.makeText(MainActivity.this, scanContent, Toast.LENGTH_SHORT).show();
                             showModal(pk, name, inStock);
 
                         } catch (JSONException e) {
