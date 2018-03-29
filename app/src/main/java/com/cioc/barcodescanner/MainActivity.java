@@ -41,12 +41,12 @@ import cz.msebera.android.httpclient.client.CookieStore;
 import cz.msebera.android.httpclient.cookie.Cookie;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
     private CookieStore httpCookieStore;
     private AsyncHttpClient client = new AsyncHttpClient();
 
-    private static String serverURL = "http://192.168.43.9:8000/";
+    private static String serverURL = "http://skinstore.monomerce.com/";
     long ids = 65465765;
 
 //    SessionManager sessionManager;
@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
         final EditText et = new EditText(this);
         et.setEms(10);
-        et.setText("http://192.168.43.9:8000/");
+        et.setText("http://skinstore.monomerce.com/");//192.168.43.9:8000/");
 
         sp = getSharedPreferences("server_status", MODE_PRIVATE);
         spe = sp.edit();
@@ -92,15 +92,9 @@ public class MainActivity extends AppCompatActivity {
                     if (url.isEmpty()) {
                         et.setError("Empty");
                     } else {
-                        boolean b = url.equals("http://192.168.43.9:8000/");
+                        boolean b = url.equals("http://skinstore.monomerce.com/");
                         if (b) {
-                            IntentIntegrator integrator = new IntentIntegrator(MainActivity.this);
-                            integrator.setDesiredBarcodeFormats(IntentIntegrator.ONE_D_CODE_TYPES);
-                            integrator.setPrompt("Scan");
-                            integrator.setCameraId(0);
-                            integrator.setBeepEnabled(false);
-                            integrator.setBarcodeImageEnabled(false);
-                            integrator.initiateScan();
+                            barcode();
                             dialog.dismiss();
                             spe.putBoolean("status", true);
                             spe.commit();
@@ -114,15 +108,19 @@ public class MainActivity extends AppCompatActivity {
             });
             adb.create().show();
         } else {
-
-            IntentIntegrator integrator = new IntentIntegrator(MainActivity.this);
-            integrator.setDesiredBarcodeFormats(IntentIntegrator.ONE_D_CODE_TYPES);
-            integrator.setPrompt("Scan");
-            integrator.setCameraId(0);
-            integrator.setBeepEnabled(false);
-            integrator.setBarcodeImageEnabled(false);
-            integrator.initiateScan();
+            barcode();
         }
+    }
+
+    private void barcode(){
+        IntentIntegrator integrator = new IntentIntegrator(MainActivity.this);
+        integrator.setDesiredBarcodeFormats(IntentIntegrator.ONE_D_CODE_TYPES);
+        integrator.setPrompt("Scan");
+        integrator.setOrientationLocked(false);
+        integrator.setCameraId(0);
+        integrator.setBeepEnabled(true);
+        integrator.setBarcodeImageEnabled(false);
+        integrator.initiateScan();
     }
 
     void showModal(final int pk, String scanContent, final int inStock){
@@ -146,10 +144,20 @@ public class MainActivity extends AppCompatActivity {
             adb.setView(v);
             adb.setCancelable(false);
             final AlertDialog ad = adb.create();
+            String s = quantity.getText().toString().trim();
 
             inScan.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    String s = quantity.getText().toString().trim();
+                    Integer i = Integer.parseInt(s);
+                    final int stock = inStock + i;
+                    Toast.makeText(MainActivity.this, "" + stock, Toast.LENGTH_SHORT).show();
+
+                    RequestParams params = new RequestParams();
+                    params.put("inStock", stock);
+
+                    setClientServer(params, pk);
                     ad.dismiss();
                     startActivity(new Intent(MainActivity.this, MainActivity.class));
                     finish();

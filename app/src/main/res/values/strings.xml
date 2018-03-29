@@ -1,4 +1,5 @@
 <resources>
-    <string name="app_name">BarcodeScanner</string>
+    <string name="app_name">Monomerce</string>
     <string name="activity_name">Please scan the barcode</string>
+    <!--<Please scan the barcode></Please>-->
 </resources>
