@@ -248,7 +248,7 @@ public class MainActivity extends Activity {
                 Toast.makeText(MainActivity.this, "You cancelled the scanning", Toast.LENGTH_LONG).show();
 
             } else {
-                String scanContent = result.getContents();
+                final String scanContent = result.getContents();
                 Toast.makeText(MainActivity.this, scanContent, Toast.LENGTH_SHORT).show();
                 client.get(serverURL+ "api/POS/product/?&serialNo=" + scanContent, new JsonHttpResponseHandler() {
                     @Override
@@ -266,6 +266,7 @@ public class MainActivity extends Activity {
                             } catch (JSONException e) {
                                 e.printStackTrace();
                                 Log.e("JSONException",""+e);
+//                                Toast.makeText(MainActivity.this, scanContent, Toast.LENGTH_SHORT).show();
                             }
 //                        }
                     }
