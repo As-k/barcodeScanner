@@ -259,7 +259,7 @@ public class MainActivity extends Activity {
                             Integer inStock = usrObj.getInt("inStock");
 
                             final String scanContent = result.getContents();
-//                            Toast.makeText(MainActivity.this, scanContent, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, scanContent, Toast.LENGTH_SHORT).show();
                             showModal(pk, name, inStock);
 
                         } catch (JSONException e) {
