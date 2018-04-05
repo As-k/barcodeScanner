@@ -46,7 +46,7 @@ public class MainActivity extends Activity {
     private CookieStore httpCookieStore;
     private AsyncHttpClient client = new AsyncHttpClient();
 
-    private static String serverURL = "http://skinstore.monomerce.com/";
+    private static String serverURL = "http://192.168.43.87:8000/"; //"http://skinstore.monomerce.com/";
     long ids = 65465765;
 
 //    SessionManager sessionManager;
@@ -64,7 +64,7 @@ public class MainActivity extends Activity {
 
         final EditText et = new EditText(this);
         et.setEms(10);
-        et.setText("http://skinstore.monomerce.com/");//192.168.43.9:8000/");
+        et.setText("http://192.168.43.87:8000/");
 
         sp = getSharedPreferences("server_status", MODE_PRIVATE);
         spe = sp.edit();
@@ -92,7 +92,7 @@ public class MainActivity extends Activity {
                     if (url.isEmpty()) {
                         et.setError("Empty");
                     } else {
-                        boolean b = url.equals("http://skinstore.monomerce.com/");
+                        boolean b = url.equals("http://192.168.43.87:8000/");
                         if (b) {
                             barcode();
                             dialog.dismiss();
@@ -245,26 +245,29 @@ public class MainActivity extends Activity {
         final IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
         if (result != null) {
             if (result.getContents() == null) {
-                Toast.makeText(MainActivity.this, "You cancelled the sanning", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "You cancelled the scanning", Toast.LENGTH_LONG).show();
 
             } else {
-
-                client.get(serverURL+ "api/POS/product/?&search=" + ids, new JsonHttpResponseHandler() {
+                String scanContent = result.getContents();
+                Toast.makeText(MainActivity.this, scanContent, Toast.LENGTH_SHORT).show();
+                client.get(serverURL+ "api/POS/product/?&serialNo=" + scanContent, new JsonHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
-                        try {
-                            JSONObject usrObj = response.getJSONObject(0);
-                            String name = usrObj.getString("name");
-                            Integer pk = usrObj.getInt("pk");
-                            Integer inStock = usrObj.getInt("inStock");
+//                        for (int i = 0; i < response.length(); i++) {
 
-                            final String scanContent = result.getContents();
-                            Toast.makeText(MainActivity.this, scanContent, Toast.LENGTH_SHORT).show();
-                            showModal(pk, name, inStock);
+                            try {
+                                JSONObject usrObj = response.getJSONObject(0);
+                                String name = usrObj.getString("name");
+                                Integer pk = usrObj.getInt("pk");
+                                Integer inStock = usrObj.getInt("inStock");
 
-                        } catch (JSONException e) {
-                            throw new RuntimeException(e);
-                        }
+
+                                showModal(pk, name, inStock);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                                Log.e("JSONException",""+e);
+                            }
+//                        }
                     }
 
                     @Override
